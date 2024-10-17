@@ -1,0 +1,115 @@
+
+TITLE: Multilevel Two-Part - Exploratory Model with Cross-Level Interactions
+DATA:  FILE IS data.csv;    
+
+DATA TWOPART:
+    NAMES = Drinks;      !Outcome variable 
+    CUTPOINT = 0;        !Split outcome variable at 0 
+    BINARY = Bdrink;     !Binary part
+    CONTINUOUS = Cdrink; !Continuous part
+    TRANSFORM = None;
+ 
+  VARIABLE: 	NAMES ARE 
+UID
+AGE
+gender
+DiaryDay
+weekend
+Drinks
+AnyDrink
+netexp5
+netrisk
+femcomp
+dailyhom
+frcomp
+netriskm
+pmnetrisk
+netexp5m
+pmnetexp5
+frcompm
+pmfrcomp
+femcompm
+pmfemcomp
+dailyhom_m
+pmdailyhom;
+  
+  MISSING ARE all (9999);
+
+USEVARIABLES pmnetrisk netriskm netexp5m pmnetexp5 frcompm dailyhom_m pmdailyhom
+pmfrcomp weekend age gender Bdrink Cdrink ;   
+  BETWEEN = netriskm netexp5m frcompm dailyhom_m age gender;
+  WITHIN = pmnetrisk pmnetexp5 pmfrcomp pmdailyhom weekend;
+  CATEGORICAL = Bdrink;
+  CLUSTER = UID;
+
+Define:
+CENTER age (GRANDMEAN);
+CENTER netriskm (GRANDMEAN);
+CENTER netexp5m (GRANDMEAN);
+CENTER frcompm (GRANDMEAN);
+CENTER dailyhom_m (GRANDMEAN);
+
+ANALYSIS: ESTIMATOR = Bayes;
+          TYPE = TWOLEVEL RANDOM;
+          PROCESSORS = 2;
+          link = logit;
+
+MODEL:
+%WITHIN%
+
+Bdrink ON weekend;
+SlopeB1 | Bdrink ON pmnetexp5;
+SlopeB2 | Bdrink ON pmnetrisk;
+Bdrink ON pmfrcomp;
+Bdrink ON pmdailyhom;
+
+Cdrink ON weekend;  
+SlopeC1 | Cdrink ON pmnetexp5; 
+SlopeC2 | Cdrink ON pmnetrisk;      
+Cdrink ON pmfrcomp;
+Cdrink ON pmdailyhom;
+
+%BETWEEN%
+
+Bdrink ON gender;
+Bdrink ON age*;
+Bdrink ON netexp5m*;
+Bdrink ON netriskm*;     
+Bdrink ON frcompm;
+Bdrink ON dailyhom_m;
+
+Cdrink ON gender;
+Cdrink ON age*;
+Cdrink ON netexp5m*;
+Cdrink ON netriskm*;     
+Cdrink ON frcompm;
+Cdrink ON dailyhom_m;
+
+SlopeB1 ON frcompm;
+SlopeC1 ON frcompm;
+
+SlopeB2 ON frcompm;
+SlopeC2 ON frcompm;
+
+SlopeB1 ON dailyhom_m;
+SlopeC1 ON dailyhom_m;
+
+SlopeB2 ON dailyhom_m;
+SlopeC2 ON dailyhom_m;
+
+SlopeB1 WITH SlopeC1;
+SlopeB2 WITH SlopeC2;
+
+(SlopeB1);
+SlopeB1*;
+(SlopeC1);
+SlopeC1*;
+(SlopeB2);
+SlopeB2*;
+(SlopeC2);
+SlopeC2*;
+
+
+OUTPUT:	
+
+   TECH8;                 
